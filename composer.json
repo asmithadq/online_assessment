@@ -1,0 +1,24 @@
+{
+    "name": "project/codeigniter3-hmvc",
+    "description": "CodeIgniter 3 HMVC Application",
+    "type": "project",
+    "require": {
+        "php": "^8.1 || ^8.2",
+        "filp/whoops": "^2.5",
+        "mpdf/mpdf": "^8.2",
+        "phpoffice/phpspreadsheet": "^1.29",
+        "phpmailer/phpmailer": "^6.9",
+        "intervention/image": "^3.4",
+        "ext-zip": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\": "application/modules/"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "8.2"
+        }
+    }
+}
