@@ -64,69 +64,92 @@ class Api_candidate extends MY_Controller
         }
     }
 
-    public function uploadImage($key, $destfolder, $new_name)
+    public function uploadBase64Image($base64_image,$destfolder,$new_name,$watermarkValue = "",$snapshot = 0)
     {
-        if (empty($_FILES[$key]['name'])) {
-            $new_name = "default-image.png";
-            return $new_name;
-        } else {
-            $destination = "./uploads/" . $destfolder . "/" . $new_name;
-            move_uploaded_file($_FILES[$key]['tmp_name'], $destination);
-            return $new_name;
-        }
-    }
-
-    public function uploadBase64Image($base64_image, $destfolder, $new_name,$watermarkValue = "",$snapshot = 0)
-    {
-        // Load the image manipulation library
         $this->load->library('image_lib');
 
-        if (empty($base64_image)) {
-            $new_name = "default-image.png";
-            return $new_name;
-        } else {
-            // Decode base64 data
-            $image_base64 = base64_decode($base64_image);
+        /*
+        |--------------------------------------------------------------------------
+        | Validate & Save Image
+        |--------------------------------------------------------------------------
+        */
+        $upload = $this->validateAndSaveBase64Image(
+            $base64_image,
+            $destfolder,
+            $new_name
+        );
 
-            // Generate unique file name
-            $file_name = $new_name . '.jpeg';
-
-            // Path to save the image
-            $file_path = "./uploads/" . $destfolder . "/" . $file_name;
-
-            // Save the decoded base64 image data to a file
-            file_put_contents($file_path, $image_base64);
-
-            if($watermarkValue != "") {
-                $this->watermarkImage($watermarkValue,$file_path,$snapshot);
-            }
-            
-            //Resize Image
-            $resized_image_path = "./uploads/" . $destfolder . "/thumbs/" . $file_name;
-            copy($file_path, $resized_image_path);
-
-            $config_resize['image_library'] = 'gd2';
-            $config_resize['source_image'] = $resized_image_path;
-            $config_resize['maintain_ratio'] = TRUE; // Maintain aspect ratio
-            $config_resize['width'] = 300; // New width
-            $config_resize['height'] = 200; // New height
-            $this->image_lib->initialize($config_resize);
-
-            // Resize the image
-            if (!$this->image_lib->resize()) {
-                echo $this->image_lib->display_errors();
-            } 
-
-            // Clear image library configuration
-            $this->image_lib->clear();
-
-            // Check if the file was successfully saved
-            if (file_exists($file_path)) {
-                return $file_name;
-            } else {
-                return "default-image.png";
-            }
+        if (!$upload) {
+            return 'default-image.png';
         }
+
+        $file_name = $upload['file_name'];
+        $file_path = $upload['file_path'];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Apply Watermark
+        |--------------------------------------------------------------------------
+        */
+        if (!empty($watermarkValue) && file_exists($file_path)) {
+            $this->watermarkImage(
+                $watermarkValue,
+                $file_path,
+                $snapshot
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Thumbnail Directory
+        |--------------------------------------------------------------------------
+        */
+        $thumb_dir = FCPATH . 'uploads/' . $destfolder . '/thumbs/';
+
+        if (!is_dir($thumb_dir)) {
+            mkdir($thumb_dir, 0755, true);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Thumbnail
+        |--------------------------------------------------------------------------
+        */
+        $resized_image_path = $thumb_dir . $file_name;
+
+        if (!copy($file_path, $resized_image_path)) {
+
+            log_message(
+                'error',
+                'Failed to create thumbnail copy for ' . $file_name
+            );
+
+            return $file_name; // Original image already saved
+        }
+
+        $config_resize = [
+            'image_library'  => 'gd2',
+            'source_image'   => $resized_image_path,
+            'maintain_ratio' => TRUE,
+            'width'          => 300,
+            'height'         => 200
+        ];
+
+        $this->image_lib->initialize($config_resize);
+
+        if (!$this->image_lib->resize()) {
+
+            log_message(
+                'error',
+                $this->image_lib->display_errors('', '')
+            );
+        }
+
+        $this->image_lib->clear();
+
+        return file_exists($file_path)
+            ? $file_name
+            : 'default-image.png';
     }
     
     public function watermarkImage($watermarkValue,$file_path,$snapshot)
@@ -191,48 +214,6 @@ class Api_candidate extends MY_Controller
         imagedestroy($overlay);
 
         //echo "Watermark applied and image saved successfully!";
-    }
-
-    public function uploadImageToMainDirectory($key, $destfolder, $new_name)
-    {
-        if (empty($_FILES[$key]['name'])) {
-            $new_name = "default-image.png";
-            return $new_name;
-        } else {
-            $destination = "./../../image/" . $destfolder . "/" . $new_name;
-            move_uploaded_file($_FILES[$key]['tmp_name'], $destination);
-            return $new_name;
-        }
-    }
-
-    public function watermarkImageOld($watermarkValue,$source_image)
-    {
-        // Load the image manipulation library
-        $this->load->library('image_lib');
-
-        // Configuration for text watermark
-        $config['source_image'] = $source_image; // Path to the source image
-        $config['wm_text'] = $watermarkValue; // Text to be used as the watermark
-        $config['wm_type'] = 'text'; // Type of watermark
-        $config['wm_font_path'] = './system/fonts/texb.ttf'; // Path to the font file
-        $config['wm_font_size'] = 70; // Small font size
-        $config['wm_font_color'] = 'ffffff'; // Font color in hexadecimal format (red in this case)
-        $config['wm_vrt_alignment'] = 'top'; // Vertical alignment of the watermark
-        $config['wm_hor_alignment'] = 'left'; // Horizontal alignment of the watermark
-        $config['wm_padding'] = '20'; // Padding around the watermark text
-
-        // Initialize the image manipulation library with the configuration
-        $this->image_lib->initialize($config);
-
-        // Apply watermark
-        if (!$this->image_lib->watermark()) {
-            echo $this->image_lib->display_errors(); // Display any errors
-        } else {
-            //echo 'Watermark applied successfully.';
-        }
-
-        // Clear any cached image data
-        $this->image_lib->clear();
     }
 
     function notification($data, $fcm_token)
@@ -2069,5 +2050,131 @@ class Api_candidate extends MY_Controller
             $data = $userRes;
         }
         echo json_encode($data);
+    }
+
+    private function validateAndSaveBase64Image($base64_image, $destfolder, $new_name)
+    {
+        // Maximum upload size (5MB)
+        $max_size = 5 * 1024 * 1024;
+
+        // Allowed image MIME types
+        $allowed_mimes = [
+            'image/jpeg',
+            'image/jpg',
+            'image/png'
+        ];
+
+        if (empty($base64_image)) {
+            return false;
+        }
+
+        // Remove Data URI prefix if present
+        if (strpos($base64_image, ',') !== false) {
+            $base64_image = explode(',', $base64_image)[1];
+        }
+
+        // Decode Base64
+        $image_data = base64_decode($base64_image, true);
+
+        if ($image_data === false) {
+            log_message('error', 'Invalid Base64 image data');
+            return false;
+        }
+
+        // File size validation
+        if (strlen($image_data) > $max_size) {
+            log_message('error', 'Image exceeds maximum allowed size');
+            return false;
+        }
+
+        $upload_dir = FCPATH . 'uploads/' . $destfolder . '/';
+
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+
+        // Temp file for validation
+        $tmp_file = tempnam(sys_get_temp_dir(), 'IMG_');
+
+        if (!$tmp_file) {
+            log_message('error', 'Unable to create temp file');
+            return false;
+        }
+
+        file_put_contents($tmp_file, $image_data);
+
+        // Validate image
+        $image_info = @getimagesize($tmp_file);
+
+        if ($image_info === false) {
+            unlink($tmp_file);
+            log_message('error', 'Invalid image file');
+            return false;
+        }
+
+        // Validate MIME
+        $mime_type = $image_info['mime'];
+
+        if (!in_array($mime_type, $allowed_mimes)) {
+            unlink($tmp_file);
+            log_message('error', 'Invalid MIME type: ' . $mime_type);
+            return false;
+        }
+
+        // Extension
+        switch ($mime_type) {
+            case 'image/png':
+                $extension = 'png';
+                break;
+
+            case 'image/jpeg':
+            case 'image/jpg':
+            default:
+                $extension = 'jpeg';
+                break;
+        }
+
+        // Safe filename
+        $safe_name = preg_replace('/[^a-zA-Z0-9_-]/', '', $new_name);
+
+        $file_name = $safe_name . '.' . $extension;
+
+        $file_path = $upload_dir . $file_name;
+
+        // Save file
+        if (!file_put_contents($file_path, $image_data)) {
+            unlink($tmp_file);
+            return false;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | ClamAV Scan
+        |--------------------------------------------------------------------------
+        */
+        /*if (function_exists('shell_exec')) {
+
+            $scan_result = @shell_exec(
+                'clamscan --no-summary ' . escapeshellarg($file_path) . ' 2>&1'
+            );
+
+            if (!empty($scan_result) && strpos($scan_result, 'FOUND') !== false) {
+
+                @unlink($file_path);
+                @unlink($tmp_file);
+
+                log_message('error', 'Virus detected: ' . $scan_result);
+
+                return false;
+            }
+        }
+
+        unlink($tmp_file);*/
+
+        return [
+            'file_name' => $file_name,
+            'file_path' => $file_path,
+            'mime_type' => $mime_type
+        ];
     }
 }
