@@ -64,114 +64,86 @@ class Api_assessor extends MY_Controller
         }
     }
 
-    public function uploadImage($key, $destfolder, $new_name)
+    public function uploadBase64Image($base64_image, $destfolder, $new_name, $watermarkValue = "")
     {
-        if (empty($_FILES[$key]['name'])) {
-            $new_name = "default-image.png";
-            return $new_name;
-        } else {
-            $destination = "./uploads/" . $destfolder . "/" . $new_name;
-            move_uploaded_file($_FILES[$key]['tmp_name'], $destination);
-            return $new_name;
-        }
-    }
-
-    public function uploadBase64Image($base64_image, $destfolder, $new_name,$watermarkValue = "")
-    {
-        // Load the image manipulation library
         $this->load->library('image_lib');
 
-        if (empty($base64_image)) {
-            $new_name = "default-image.png";
-            return $new_name;
-        } else {
-            // Decode base64 data
-            $image_base64 = base64_decode($base64_image);
+        $upload = $this->validateAndSaveBase64Image(
+            $base64_image,
+            $destfolder,
+            $new_name
+        );
 
-            // Generate unique file name
-            $file_name = $new_name . '.jpeg';
-
-            // Path to save the image
-            $file_path = "./uploads/" . $destfolder . "/" . $file_name;
-
-            // Save the decoded base64 image data to a file
-            file_put_contents($file_path, $image_base64);
-
-            // Configuration for resizing the actual image
-            // Make a copy of the uploaded image
-            $resized_image_path = "./uploads/" . $destfolder . "/thumbs/" . $file_name;
-            copy($file_path, $resized_image_path);
-
-            $config_resize['image_library'] = 'gd2';
-            $config_resize['source_image'] = $resized_image_path;
-            $config_resize['maintain_ratio'] = TRUE; // Maintain aspect ratio
-            $config_resize['width'] = 300; // New width
-            $config_resize['height'] = 200; // New height
-            $this->image_lib->initialize($config_resize);
-
-            // Resize the image
-            if (!$this->image_lib->resize()) {
-                echo $this->image_lib->display_errors();
-            } 
-
-            // Clear image library configuration
-            $this->image_lib->clear();   
-               
-            /*if($watermarkValue != "") {
-                $watermark_file_name = $new_name . '-watermark.jpeg';
-                $watermark_file_path = "./uploads/" . $destfolder . "/" . $watermark_file_name;
-
-                // Make a copy of the image file
-                if (copy($file_path, $watermark_file_path)) {
-                    $this->watermarkImage($watermarkValue,$watermark_file_path);
-                }
-            }*/
-            
-            if($watermarkValue != "") {
-                $this->watermarkImage($watermarkValue,$file_path);
-            }
-
-            // Check if the file was successfully saved
-            if (file_exists($file_path)) {
-                return $file_name;
-            } else {
-                return "default-image.png";
-            }
+        if (!$upload) {
+            return 'default-image.png';
         }
+
+        $file_name = $upload['file_name'];
+        $file_path = $upload['file_path'];
+
+        // Create thumbnail
+        $thumb_dir = FCPATH . 'uploads/' . $destfolder . '/thumbs/';
+
+        if (!is_dir($thumb_dir)) {
+            mkdir($thumb_dir, 0755, true);
+        }
+
+        $thumb_path = $thumb_dir . $file_name;
+
+        copy($file_path, $thumb_path);
+
+        $config = [
+            'image_library'  => 'gd2',
+            'source_image'   => $thumb_path,
+            'maintain_ratio' => TRUE,
+            'width'          => 300,
+            'height'         => 200
+        ];
+
+        $this->image_lib->initialize($config);
+
+        if (!$this->image_lib->resize()) {
+            log_message('error', $this->image_lib->display_errors());
+        }
+
+        $this->image_lib->clear();
+
+        if (!empty($watermarkValue)) {
+            $this->watermarkImage($watermarkValue, $file_path);
+        }
+
+        return $file_name;
     }
 
-    public function uploadBase64ImageAndWatermark($base64_image, $destfolder, $new_name,$watermarkValue = "")
+    public function uploadBase64ImageAndWatermark($base64_image, $destfolder, $new_name, $watermarkValue = "")
     {
-        // Load the image manipulation library
         $this->load->library('image_lib');
 
-        if (empty($base64_image)) {
-            $new_name = "default-image.png";
-            return $new_name;
-        } else {
-            // Decode base64 data
-            $image_base64 = base64_decode($base64_image);
+        $upload = $this->validateAndSaveBase64Image(
+            $base64_image,
+            $destfolder,
+            $new_name
+        );
 
-            // Generate unique file name
-            $file_name = $new_name . '.jpeg';
-
-            // Path to save the image
-            $file_path = "./uploads/" . $destfolder . "/" . $file_name;
-
-            // Save the decoded base64 image data to a file
-            file_put_contents($file_path, $image_base64);
-
-            if($watermarkValue != "") {
-                $this->watermarkImage($watermarkValue,$file_path);
-            }
-
-            // Check if the file was successfully saved
-            if (file_exists($file_path)) {
-                return $file_name;
-            } else {
-                return "default-image.png";
-            }
+        if (!$upload) {
+            return 'default-image.png';
         }
+
+        $file_name = $upload['file_name'];
+        $file_path = $upload['file_path'];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Apply Watermark
+        |--------------------------------------------------------------------------
+        */
+        if (!empty($watermarkValue) && file_exists($file_path)) {
+            $this->watermarkImage($watermarkValue, $file_path);
+        }
+
+        return file_exists($file_path)
+            ? $file_name
+            : 'default-image.png';
     }
     
     public function watermarkImage($watermarkValue,$file_path)
@@ -238,93 +210,259 @@ class Api_assessor extends MY_Controller
         //echo "Watermark applied and image saved successfully!";
     }
     
-    public function uploadBase64ImageNoThumb($base64_image, $destfolder, $new_name,$watermarkValue = "")
+    public function uploadBase64ImageNoThumb($base64_image, $destfolder, $new_name, $watermarkValue = "")
     {
-        // Load the image manipulation library
         $this->load->library('image_lib');
 
-        if (empty($base64_image)) {
-            $new_name = "default-image.png";
-            return $new_name;
-        } else {
-            // Decode base64 data
-            $image_base64 = base64_decode($base64_image);
+        $upload = $this->validateAndSaveBase64Image(
+            $base64_image,
+            $destfolder,
+            $new_name
+        );
 
-            // Generate unique file name
-            $file_name = $new_name . '.jpeg';
-
-            // Path to save the image
-            $file_path = "./uploads/" . $destfolder . "/" . $file_name;
-
-            // Save the decoded base64 image data to a file
-            file_put_contents($file_path, $image_base64);
-
-            // Check if the file was successfully saved
-            if (file_exists($file_path)) {
-                return $file_name;
-            } else {
-                return "default-image.png";
-            }
-        }
-    }
-
-    public function uploadImageToMainDirectory($key, $destfolder, $new_name)
-    {
-        if (empty($_FILES[$key]['name'])) {
-            $new_name = "default-image.png";
-            return $new_name;
-        } else {
-            $destination = "./../../image/" . $destfolder . "/" . $new_name;
-            move_uploaded_file($_FILES[$key]['tmp_name'], $destination);
-            return $new_name;
-        }
-    }
-
-    public function watermarkImageOld($watermarkValue,$source_image)
-    {
-        // Load the image manipulation library
-        $this->load->library('image_lib');
-
-        // Configuration for text watermark
-        $config['source_image'] = $source_image; // Path to the source image
-        $config['wm_text'] = $watermarkValue; // Text to be used as the watermark
-        $config['wm_type'] = 'text'; // Type of watermark
-        $config['wm_font_path'] = './system/fonts/texb.ttf'; // Path to the font file
-        $config['wm_font_size'] = 70; // Small font size
-        $config['wm_font_color'] = 'ffffff'; // Font color in hexadecimal format (red in this case)
-        $config['wm_vrt_alignment'] = 'top'; // Vertical alignment of the watermark
-        $config['wm_hor_alignment'] = 'left'; // Horizontal alignment of the watermark
-        $config['wm_padding'] = '20'; // Padding around the watermark text
-
-        // Initialize the image manipulation library with the configuration
-        $this->image_lib->initialize($config);
-
-        // Apply watermark
-        if (!$this->image_lib->watermark()) {
-            echo $this->image_lib->display_errors(); // Display any errors
-        } else {
-            //echo 'Watermark applied successfully.';
+        if (!$upload) {
+            return 'default-image.png';
         }
 
-        // Clear any cached image data
-        $this->image_lib->clear();
+        return $upload['file_name'];
     }
 
     public function uploadFile($key, $destfolder, $new_name)
     {
-        if (empty($_FILES[$key]['name'])) {
-            $new_name = "default-image.png";
-            return $new_name;
-        } else {
-            $extension = pathinfo($_FILES[$key]['name'], PATHINFO_EXTENSION);
-            // Generate unique file name
-            $file_name = $new_name . '.'.$extension;
+        $upload = $this->validateAndSaveUploadedFile(
+            $key,
+            $destfolder,
+            $new_name
+        );
 
-            // Path to save the image
-            $destination = "./uploads/" . $destfolder . "/" . $file_name;
-            move_uploaded_file($_FILES[$key]['tmp_name'], $destination);
-            return $file_name;
+        if (!$upload) {
+            return 'default-image.png';
         }
+
+        return $upload['file_name'];
+    }
+
+    private function validateAndSaveBase64Image($base64_image, $destfolder, $new_name)
+    {
+        // Maximum upload size (5MB)
+        $max_size = 5 * 1024 * 1024;
+
+        // Allowed image MIME types
+        $allowed_mimes = [
+            'image/jpeg',
+            'image/jpg',
+            'image/png'
+        ];
+
+        if (empty($base64_image)) {
+            return false;
+        }
+
+        // Remove Data URI prefix if present
+        if (strpos($base64_image, ',') !== false) {
+            $base64_image = explode(',', $base64_image)[1];
+        }
+
+        // Decode Base64
+        $image_data = base64_decode($base64_image, true);
+
+        if ($image_data === false) {
+            log_message('error', 'Invalid Base64 image data');
+            return false;
+        }
+
+        // File size validation
+        if (strlen($image_data) > $max_size) {
+            log_message('error', 'Image exceeds maximum allowed size');
+            return false;
+        }
+
+        $upload_dir = FCPATH . 'uploads/' . $destfolder . '/';
+
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+
+        // Temp file for validation
+        $tmp_file = tempnam(sys_get_temp_dir(), 'IMG_');
+
+        if (!$tmp_file) {
+            log_message('error', 'Unable to create temp file');
+            return false;
+        }
+
+        file_put_contents($tmp_file, $image_data);
+
+        // Validate image
+        $image_info = @getimagesize($tmp_file);
+
+        if ($image_info === false) {
+            unlink($tmp_file);
+            log_message('error', 'Invalid image file');
+            return false;
+        }
+
+        // Validate MIME
+        $mime_type = $image_info['mime'];
+
+        if (!in_array($mime_type, $allowed_mimes)) {
+            unlink($tmp_file);
+            log_message('error', 'Invalid MIME type: ' . $mime_type);
+            return false;
+        }
+
+        // Extension
+        switch ($mime_type) {
+            case 'image/png':
+                $extension = 'png';
+                break;
+
+            case 'image/jpeg':
+            case 'image/jpg':
+            default:
+                $extension = 'jpeg';
+                break;
+        }
+
+        // Safe filename
+        $safe_name = preg_replace('/[^a-zA-Z0-9_-]/', '', $new_name);
+
+        $file_name = $safe_name . '.' . $extension;
+
+        $file_path = $upload_dir . $file_name;
+
+        // Save file
+        if (!file_put_contents($file_path, $image_data)) {
+            unlink($tmp_file);
+            return false;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | ClamAV Scan
+        |--------------------------------------------------------------------------
+        */
+        /*if (function_exists('shell_exec')) {
+
+            $scan_result = @shell_exec(
+                'clamscan --no-summary ' . escapeshellarg($file_path) . ' 2>&1'
+            );
+
+            if (!empty($scan_result) && strpos($scan_result, 'FOUND') !== false) {
+
+                @unlink($file_path);
+                @unlink($tmp_file);
+
+                log_message('error', 'Virus detected: ' . $scan_result);
+
+                return false;
+            }
+        }
+
+        unlink($tmp_file);*/
+
+        return [
+            'file_name' => $file_name,
+            'file_path' => $file_path,
+            'mime_type' => $mime_type
+        ];
+    }
+
+    private function validateAndSaveUploadedFile($file_key, $destfolder, $new_name)
+    {
+        if (
+            !isset($_FILES[$file_key]) ||
+            $_FILES[$file_key]['error'] !== UPLOAD_ERR_OK
+        ) {
+            return false;
+        }
+
+        // Maximum upload size (5MB)
+        $max_size = 5 * 1024 * 1024;
+
+        // Allowed MIME Types
+        $allowed_mimes = [
+            'image/jpeg',
+            'image/png',
+            'application/pdf',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // xlsx
+            'application/vnd.ms-excel', // xls
+            'application/msword', // doc
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' // docx
+        ];
+
+        $tmp_file = $_FILES[$file_key]['tmp_name'];
+
+        // Size validation
+        if ($_FILES[$file_key]['size'] > $max_size) {
+            log_message('error', 'Uploaded file exceeds maximum size');
+            return false;
+        }
+
+        // MIME validation
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $tmp_file);
+        finfo_close($finfo);
+
+        if (!in_array($mime_type, $allowed_mimes)) {
+            log_message('error', 'Invalid MIME Type: ' . $mime_type);
+            return false;
+        }
+
+        // Safe filename
+        $safe_name = preg_replace('/[^a-zA-Z0-9_-]/', '', $new_name);
+
+        $extension = strtolower(
+            pathinfo($_FILES[$file_key]['name'], PATHINFO_EXTENSION)
+        );
+
+        $file_name = $safe_name . '.' . $extension;
+
+        $upload_dir = FCPATH . 'uploads/' . $destfolder . '/';
+
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+
+        $file_path = $upload_dir . $file_name;
+
+        if (!move_uploaded_file($tmp_file, $file_path)) {
+            log_message('error', 'Failed to move uploaded file');
+            return false;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Optional ClamAV Scan
+        |--------------------------------------------------------------------------
+        */
+        /*if (function_exists('shell_exec')) {
+
+            $scan_result = @shell_exec(
+                'clamscan --no-summary ' .
+                escapeshellarg($file_path) .
+                ' 2>&1'
+            );
+
+            if (!empty($scan_result) &&
+                strpos($scan_result, 'FOUND') !== false) {
+
+                @unlink($file_path);
+
+                log_message(
+                    'error',
+                    'Virus detected: ' . $scan_result
+                );
+
+                return false;
+            }
+        }*/
+
+        return [
+            'file_name' => $file_name,
+            'file_path' => $file_path,
+            'mime_type' => $mime_type
+        ];
     }
 
     function notification($data, $fcm_token)
@@ -1461,44 +1599,61 @@ class Api_assessor extends MY_Controller
                         // File paths
                         $temp_path = $_FILES['video_file']['tmp_name'];
                         $fileName = $student_id.'-'.date('dmYHis').'-'.$fieldName.'.mp4';
-                        $output_file = './uploads/student_assessment_videos/'.$fileName;
                         $input_file = './uploads/student_assessment_videos/temp/' . $_FILES['video_file']['name'];
                         $video_submitted_dts = date('d-m-Y H:i:s'); 
 
-                        if (move_uploaded_file($temp_path, $input_file)) {
+                        $video = $this->validateAndSaveUploadedVideo('video_file','student_assessment_videos/temp',$student_id . '-' . date('dmYHis') . '-' . $fieldName,5); // max size MB
+
+                        if ($video) {
+
+                            $input_file     = $video['file_path'];
+                            $fileName       = $video['file_name'];
+                            $output_file    = './uploads/student_assessment_videos/'.$fileName;
+
                             $updData[$submissionFieldName] = date('Y-m-d H:i:s');
                             $updData[$fieldName] = $fileName;
-                            if($old_video_file != "" && $updData[$fieldName] != "") {
-                                $old_file = $this->config->item('student_assessment_videos_path').$old_video_file; 
+
+                            if ($old_video_file != "" && $updData[$fieldName] != "") {
+
+                                $old_file = $this->config->item('student_assessment_videos_path') . $old_video_file;
+
                                 if (file_exists($old_file)) {
-                                    // Attempt to delete the file
-                                    unlink($old_file);
+                                    @unlink($old_file);
                                 }
                             }
 
-                            //Watermark the videos
-                            // Define input and output file names
-                            $output = watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$this->input->post('lat'),$this->input->post('long'),$this->input->post('geo_address'),$video_submitted_dts);
+                            // Watermark video
+                            $output = watermarkVideo(
+                                $input_file,
+                                $output_file,
+                                $batch_id,
+                                $assessor_code,
+                                $this->input->post('lat'),
+                                $this->input->post('long'),
+                                $this->input->post('geo_address'),
+                                $video_submitted_dts
+                            );
 
-                            if($type == 'Practical Activity') {
+                            if ($type == 'Practical Activity') {
+
                                 $updData['practicalactivity_video_lat'] = $this->input->post('lat');
                                 $updData['practicalactivity_video_lng'] = $this->input->post('long');
                                 $updData['practicalactivity_video_geoaddress'] = $this->input->post('geo_address');
-                                $updData['practicalactivity_video_watermark_status'] = ($output == 'Success') ? 1 : 2; 
+                                $updData['practicalactivity_video_watermark_status'] = ($output == 'Success') ? 1 : 2;
                                 $updData['practicalactivity_video_submitted_dts'] = date('Y-m-d H:i:s');
-                            }
-                            else {
+
+                            } else {
+
                                 $updData['viva_video_lat'] = $this->input->post('lat');
                                 $updData['viva_video_lng'] = $this->input->post('long');
-                                $updData['viva_video_geoaddress'] = $this->input->post('geo_address'); 
-                                $updData['viva_video_watermark_status'] = ($output == 'Success') ? 1 : 2; 
+                                $updData['viva_video_geoaddress'] = $this->input->post('geo_address');
+                                $updData['viva_video_watermark_status'] = ($output == 'Success') ? 1 : 2;
                                 $updData['viva_video_submitted_dts'] = date('Y-m-d H:i:s');
                             }
-                            
-                            $this->db->where('student_id', $student_id);
-                            $this->db->update('tbl_students', $updData);  
 
-                            //Insert into tbl_cron_video_watermarking
+                            $this->db->where('student_id', $student_id);
+                            $this->db->update('tbl_students', $updData);
+
                             $arrInsert['student_id'] = $student_id;
                             $arrInsert['batch_id'] = $batch_id;
                             $arrInsert['assessor_code'] = $assessor_code;
@@ -1507,15 +1662,19 @@ class Api_assessor extends MY_Controller
                             $arrInsert['response'] = ($output == 'Success') ? 'Success' : $output;
                             $arrInsert['created_dts'] = date('Y-m-d H:i:s');
 
-                            $this->db->insert('tbl_cron_video_watermarking', $arrInsert); 
+                            $this->db->insert('tbl_cron_video_watermarking', $arrInsert);
 
                             $data['status'] = true;
                             $data['rcode'] = 200;
-                            $data['message'] = ($output == 'Success') ? 'Video saved successfully' : 'Error watermarking Video. '.$output;
+                            $data['message'] = ($output == 'Success')
+                                ? 'Video saved successfully'
+                                : 'Error watermarking Video. ' . $output;
+
                         } else {
+
                             $data['status'] = false;
                             $data['rcode'] = 500;
-                            $data['message'] = "Error! Uploading the file.";
+                            $data['message'] = 'Invalid or unsafe video uploaded.';
                         }
                     }
                     else {
@@ -1765,6 +1924,21 @@ class Api_assessor extends MY_Controller
                         $updData['document_file_uploaded'] = $this->uploadBase64ImageAndWatermark($this->input->post('file'), 'assessors_checklist_documents', $batch_id.'-'.seo_friendly_url($this->input->post('document_title')).'-'.date('dmYHis'),$watermarkValue);
                     }
                     else if($this->input->post('document_type') == 'text') {
+                         $description = trim($this->input->post('file', true));
+
+                        // Remove all HTML tags
+                        $description = strip_tags($description);
+
+                        // Length validation
+                        if (strlen($description) > 5000) {
+
+                            $data['status'] = false;
+                            $data['rcode'] = 400;
+                            $data['message'] = 'Description exceeds maximum length.';
+                            echo json_encode($data);
+                            exit;
+                        }
+
                         $updData['document_description'] = $this->input->post('file'); 
                     }
                     else if($video_upload == 1) {
@@ -1772,39 +1946,72 @@ class Api_assessor extends MY_Controller
                             // File paths
                             $temp_path = $_FILES['file']['tmp_name'];
                             $fileName = $batch_id.'-'.seo_friendly_url($this->input->post('document_title')).'-'.date('dmYHis').'.mp4';
-                            $output_file = './uploads/assessors_checklist_documents/'.$fileName;
+                            //$output_file = './uploads/assessors_checklist_documents/'.$fileName;
                             $input_file = './uploads/assessors_checklist_documents/temp/' . $_FILES['file']['name']; 
                             $video_submitted_dts = date('d-m-Y H:i:s'); 
     
-                            if (move_uploaded_file($temp_path, $input_file)) {
+                            $video = $this->validateAndSaveUploadedVideo('video_file','student_assessment_videos/temp',$batch_id . '-' . date('dmYHis') . '-document',5);
+
+                            if ($video) {
+
+                                $input_file = $video['file_path'];
+                                $fileName   = $video['file_name'];
+
+                                $output_file = './uploads/student_assessment_videos/' . $fileName;
+
                                 $updData['document_file_uploaded'] = $fileName;
-                                
-                                //Watermark the videos
-                                // Define input and output file names
-                                $output = watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$this->input->post('lat'),$this->input->post('long'),$this->input->post('geo_address'),$video_submitted_dts);
-    
-                                //Insert into tbl_cron_video_watermarking
-                                $arrInsertCron['student_id'] = 0;
-                                $arrInsertCron['batch_id'] = $batch_id;
-                                $arrInsertCron['assessor_code'] = $assessor_code;
-                                $arrInsertCron['video_type'] = "Checklist Document ".seo_friendly_url($this->input->post('document_title'));
-                                $arrInsertCron['status'] = ($output == 'Success') ? 'Success' : 'Error';
-                                $arrInsertCron['response'] = ($output == 'Success') ? 'Success' : $output;
-                                $arrInsertCron['created_dts'] = date('Y-m-d H:i:s');
-    
-                                $this->db->insert('tbl_cron_video_watermarking', $arrInsertCron); 
-                                
-                                $video_error = ($output == 'Success') ? 0 : 1; 
-    
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Watermark Video
+                                |--------------------------------------------------------------------------
+                                */
+                                $output = watermarkVideo(
+                                    $input_file,
+                                    $output_file,
+                                    $batch_id,
+                                    $assessor_code,
+                                    $this->input->post('lat', true),
+                                    $this->input->post('long', true),
+                                    $this->input->post('geo_address', true),
+                                    $video_submitted_dts
+                                );
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Log Watermark Status
+                                |--------------------------------------------------------------------------
+                                */
+                                $arrInsertCron = [
+                                    'student_id'   => 0,
+                                    'batch_id'     => $batch_id,
+                                    'assessor_code'=> $assessor_code,
+                                    'video_type'   => 'Checklist Document ' .
+                                                    seo_friendly_url($this->input->post('document_title', true)),
+                                    'status'       => ($output == 'Success') ? 'Success' : 'Error',
+                                    'response'     => ($output == 'Success') ? 'Success' : $output,
+                                    'created_dts'  => date('Y-m-d H:i:s')
+                                ];
+
+                                $this->db->insert('tbl_cron_video_watermarking',$arrInsertCron);
+
+                                $video_error = ($output == 'Success') ? 0 : 1;
+
                             } else {
+
+                                // Validation failed
                                 $video_error = 2;
+
+                                log_message(
+                                    'error',
+                                    'Video upload validation failed for checklist document.'
+                                );
                             }
                         }
                         else {
                             $video_error = 3;
                         }
                     }
-                    
                     
                     if($old_file != "" && $updData['document_file_uploaded'] != "") {
                         $file = $this->config->item('assessors_checklist_documents_path').$old_file;
@@ -2925,7 +3132,178 @@ class Api_assessor extends MY_Controller
         echo json_encode($data);
     }
 
-    
+    private function validateAndSaveUploadedVideo($fileKey,$destFolder,$newName,$maxSizeMB = 100) {
+
+        if (
+            !isset($_FILES[$fileKey]) ||
+            $_FILES[$fileKey]['error'] !== UPLOAD_ERR_OK
+        ) {
+            log_message('error', 'Video upload failed.');
+            return false;
+        }
+
+        $tmpFile = $_FILES[$fileKey]['tmp_name'];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Size Validation
+        |--------------------------------------------------------------------------
+        */
+        $maxSizeBytes = $maxSizeMB * 1024 * 1024;
+
+        if ($_FILES[$fileKey]['size'] > $maxSizeBytes) {
+            log_message('error', 'Video exceeds size limit.');
+            return false;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Extension Validation
+        |--------------------------------------------------------------------------
+        */
+        $allowedExtensions = [
+            'mp4',
+            'mov',
+            'avi',
+            'mkv',
+            'webm'
+        ];
+
+        $extension = strtolower(
+            pathinfo($_FILES[$fileKey]['name'], PATHINFO_EXTENSION)
+        );
+
+        if (!in_array($extension, $allowedExtensions)) {
+            log_message('error', 'Invalid video extension.');
+            return false;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | MIME Validation
+        |--------------------------------------------------------------------------
+        */
+        $allowedMimes = [
+            'video/mp4',
+            'video/quicktime',
+            'video/x-msvideo',
+            'video/x-matroska',
+            'video/webm',
+            'application/octet-stream'
+        ];
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $tmpFile);
+        finfo_close($finfo);
+
+        if (!in_array($mimeType, $allowedMimes)) {
+            log_message(
+                'error',
+                'Invalid video MIME type: ' . $mimeType
+            );
+            return false;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Verify Actual Video Using FFProbe
+        |--------------------------------------------------------------------------
+        */
+        if (function_exists('shell_exec')) {
+
+            $ffprobe = @shell_exec(
+                'ffprobe -v error -show_format -show_streams ' .
+                escapeshellarg($tmpFile) .
+                ' 2>&1'
+            );
+
+            if (empty($ffprobe)) {
+                log_message(
+                    'error',
+                    'FFProbe validation failed.'
+                );
+                return false;
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Optional ClamAV Scan
+        |--------------------------------------------------------------------------
+        */
+        /*
+        if (function_exists('shell_exec')) {
+
+            $scanResult = @shell_exec(
+                'clamscan --no-summary ' .
+                escapeshellarg($tmpFile) .
+                ' 2>&1'
+            );
+
+            if (
+                !empty($scanResult) &&
+                strpos($scanResult, 'FOUND') !== false
+            ) {
+
+                log_message(
+                    'error',
+                    'Virus detected: ' . $scanResult
+                );
+
+                return false;
+            }
+        }
+        */
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Upload Directory
+        |--------------------------------------------------------------------------
+        */
+        $uploadDir = FCPATH . 'uploads/' . $destFolder . '/';
+
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Safe File Name
+        |--------------------------------------------------------------------------
+        */
+        $safeName = preg_replace(
+            '/[^a-zA-Z0-9_-]/',
+            '',
+            $newName
+        );
+
+        $fileName = $safeName . '.' . $extension;
+
+        $filePath = $uploadDir . $fileName;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Save Video
+        |--------------------------------------------------------------------------
+        */
+        if (!move_uploaded_file($tmpFile, $filePath)) {
+
+            log_message(
+                'error',
+                'Failed to save uploaded video.'
+            );
+
+            return false;
+        }
+
+        return [
+            'file_name' => $fileName,
+            'file_path' => $filePath,
+            'mime_type' => $mimeType,
+            'extension' => $extension,
+            'size' => filesize($filePath)
+        ];
+    }
     
     
 }
