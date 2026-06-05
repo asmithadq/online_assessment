@@ -38,73 +38,236 @@ function random_numeric($length_of_string)
     return substr(str_shuffle($str_result),0, $length_of_string);
 }
 
-function uploadImage($key, $destfolder, $new_name,$watermarkValue = "")
+function uploadImage($key, $destfolder, $new_name, $watermarkValue = "")
 {
-    if (empty($_FILES[$key]['name'])) {
-        $new_name = "default-image.png";
-        return $new_name;
-    } else {
-        $destination = "./uploads/" . $destfolder . "/" . $new_name;
-        move_uploaded_file($_FILES[$key]['tmp_name'], $destination);
+    if (
+        !isset($_FILES[$key]) ||
+        $_FILES[$key]['error'] !== UPLOAD_ERR_OK ||
+        empty($_FILES[$key]['name'])
+    ) {
+        return "default-image.png";
+    }
 
-        if($watermarkValue != "") {
-            // Load the image manipulation library
-            $CI =& get_instance();
-            $CI->load->library('image_lib');
+    // Max size 10MB
+    $max_size = 10 * 1024 * 1024;
 
-            // Determine the file extension
-            $extension = pathinfo($destination, PATHINFO_EXTENSION);
-            //echo "<br> image type ".$extension;exit;
+    if ($_FILES[$key]['size'] > $max_size) {
+        log_message('error', 'Uploaded file exceeds size limit');
+        return "default-image.png";
+    }
 
-            // Configuration for resizing the actual image
-            $config_resize['image_library'] = 'gd2';
-            $config_resize['source_image'] = $destination;
-            $config_resize['maintain_ratio'] = TRUE; // Maintain aspect ratio
-            $config_resize['width'] = 300; // New width
-            $config_resize['height'] = 200; // New height
-            $CI->image_lib->initialize($config_resize);
+    $tmp_file = $_FILES[$key]['tmp_name'];
 
-            // Resize the image
-            if (!$CI->image_lib->resize()) {
-                echo $CI->image_lib->display_errors();
-            } else {
-                // Define the path for the resized image
-                $resized_image_path = "./uploads/" . $destfolder . "/thumbs/" . $new_name;
+    /*
+    |--------------------------------------------------------------------------
+    | MIME Validation
+    |--------------------------------------------------------------------------
+    */
+    $allowed_mimes = [
+        // Images
+        'image/jpeg',
+        'image/png',
+        'image/gif',
 
-                // Save the resized image to a new file
-                if ($extension == "jpg" || $extension == "jpeg") {
-                    // JPEG image
-                    $image = imagecreatefromjpeg($config_resize['source_image']);
-                    imagejpeg($image, $resized_image_path);
-                    imagedestroy($image);
-                } elseif ($extension == "png") {
-                    // PNG image
-                    $image = imagecreatefrompng($config_resize['source_image']);
-                    imagepng($image, $resized_image_path);
-                    imagedestroy($image);
-                } elseif ($extension == "gif") {
-                    // GIF image
-                    $image = imagecreatefromgif($config_resize['source_image']);
-                    imagegif($image, $resized_image_path);
-                    imagedestroy($image);
-                }
-            }
+        // PDF
+        'application/pdf',
 
-            // Clear image library configuration
-            $CI->image_lib->clear();
+        // DOC
+        'application/msword',
 
-            $file_extension = '.'.pathinfo($new_name, PATHINFO_EXTENSION);
-            $watermark_file_name = str_replace($file_extension,'-watermark'.$file_extension,$new_name);
-            $watermark_destination = "./uploads/" . $destfolder . "/" . $watermark_file_name;
+        // DOCX
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
 
-            // Make a copy of the image file
-            if (copy($destination, $watermark_destination)) {
-                watermarkImage($watermarkValue,$watermark_destination);
-            } 
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime_type = finfo_file($finfo, $tmp_file);
+    finfo_close($finfo);
+
+    if (!in_array($mime_type, $allowed_mimes)) {
+        log_message('error', 'Invalid MIME Type: ' . $mime_type);
+        return "default-image.png";
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Extension Validation
+    |--------------------------------------------------------------------------
+    */
+    $extension = strtolower(
+        pathinfo($_FILES[$key]['name'], PATHINFO_EXTENSION)
+    );
+
+    $allowed_extensions = [
+        'jpg',
+        'jpeg',
+        'png',
+        'gif',
+        'pdf',
+        'doc',
+        'docx'
+    ];
+
+    if (!in_array($extension, $allowed_extensions)) {
+        log_message('error', 'Invalid file extension');
+        return "default-image.png";
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Additional Validation For Images
+    |--------------------------------------------------------------------------
+    */
+    $is_image = in_array(
+        $extension,
+        ['jpg', 'jpeg', 'png', 'gif']
+    );
+
+    if ($is_image) {
+
+        $image_info = @getimagesize($tmp_file);
+
+        if ($image_info === false) {
+            log_message('error', 'Invalid image file');
+            return "default-image.png";
         }
 
-        return $new_name;
+        if (
+            $image_info[0] > 5000 ||
+            $image_info[1] > 5000
+        ) {
+            log_message('error', 'Image dimensions too large');
+            return "default-image.png";
+        }
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Create Upload Directory
+    |--------------------------------------------------------------------------
+    */
+    $upload_dir = FCPATH . 'uploads/' . $destfolder . '/';
+
+    if (!is_dir($upload_dir)) {
+        mkdir($upload_dir, 0755, true);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Safe File Name
+    |--------------------------------------------------------------------------
+    */
+    $safe_filename = preg_replace(
+        '/[^a-zA-Z0-9._-]/',
+        '',
+        $new_name
+    );
+
+    $destination = $upload_dir . $safe_filename;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Optional ClamAV Scan
+    |--------------------------------------------------------------------------
+    */
+    /*
+    if (function_exists('shell_exec')) {
+
+        $scan_result = @shell_exec(
+            'clamscan --no-summary ' .
+            escapeshellarg($tmp_file) .
+            ' 2>&1'
+        );
+
+        if (
+            !empty($scan_result) &&
+            strpos($scan_result, 'FOUND') !== false
+        ) {
+            log_message('error', 'Virus detected');
+            return "default-image.png";
+        }
+    }
+    */
+
+    /*
+    |--------------------------------------------------------------------------
+    | Move Uploaded File
+    |--------------------------------------------------------------------------
+    */
+    if (!move_uploaded_file($tmp_file, $destination)) {
+        log_message('error', 'Failed to move uploaded file');
+        return "default-image.png";
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Watermark & Thumbnail (Images Only)
+    |--------------------------------------------------------------------------
+    */
+    if ($is_image && !empty($watermarkValue)) {
+
+        $CI =& get_instance();
+        $CI->load->library('image_lib');
+
+        $thumb_dir = $upload_dir . 'thumbs/';
+
+        if (!is_dir($thumb_dir)) {
+            mkdir($thumb_dir, 0755, true);
+        }
+
+        $config_resize = [
+            'image_library'  => 'gd2',
+            'source_image'   => $destination,
+            'maintain_ratio' => TRUE,
+            'width'          => 300,
+            'height'         => 200
+        ];
+
+        $CI->image_lib->initialize($config_resize);
+
+        if (!$CI->image_lib->resize()) {
+
+            log_message(
+                'error',
+                $CI->image_lib->display_errors('', '')
+            );
+
+        } else {
+
+            $resized_image_path =
+                $thumb_dir . $safe_filename;
+
+            copy(
+                $destination,
+                $resized_image_path
+            );
+        }
+
+        $CI->image_lib->clear();
+
+        $file_extension = '.' . pathinfo(
+            $safe_filename,
+            PATHINFO_EXTENSION
+        );
+
+        $watermark_file_name = str_replace(
+            $file_extension,
+            '-watermark' . $file_extension,
+            $safe_filename
+        );
+
+        $watermark_destination =
+            $upload_dir . $watermark_file_name;
+
+        if (copy($destination, $watermark_destination)) {
+
+            watermarkImage(
+                $watermarkValue,
+                $watermark_destination
+            );
+        }
+    }
+
+    return $safe_filename;
 }
 
 function watermarkImage($watermarkValue,$source_image)
