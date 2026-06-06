@@ -1,0 +1,35 @@
+# Git and GitHub metadata
+.git
+.gitignore
+.github
+
+# Docker build configuration files
+Dockerfile
+docker-compose.yaml
+.dockerignore
+
+# Local environment secret variables
+.env
+.env.*
+*.bak
+*.local
+
+# Composer package directories
+# (Letting Docker download fresh dependencies ensures compatibility)
+vendor/
+
+# CodeIgniter 4 framework cache, logs, and sessions
+writable/cache/*
+writable/logs/*
+writable/session/*
+writable/debugbar/*
+
+# CodeIgniter 3 cache and logs (Uncomment if using CI3)
+# application/cache/*
+# application/logs/*
+
+# OS generated system files and IDE configurations
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
