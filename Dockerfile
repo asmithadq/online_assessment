@@ -27,7 +27,7 @@ RUN a2enmod rewrite
 
 # Setup Document Root target pointing to the framework public assets 
 # NOTE: If you use CodeIgniter 3, change "/public" down to just "/var/www/html"
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+ENV APACHE_DOCUMENT_ROOT /var/www/html
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
