@@ -6,6 +6,7 @@ FROM php:8.2-apache
 # ==========================================
 # 2. Install System and Extension Modules
 # ==========================================
+# FIXED: Added rsync to safely merge our multi-source vendor assets together
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libicu-dev \
     libpng-dev \
@@ -18,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     git \
     vim \
+    rsync \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) intl gd pdo_mysql mysqli opcache mbstring bcmath zip \
     && pecl install imagick \
@@ -33,16 +35,13 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
-# Force Apache to pass the Docker environment variable directly into the $_SERVER global array
 RUN echo "PassEnv CI_ENV" >> /etc/apache2/apache2.conf
 
-# Force absolute AllowOverride activation at the bottom of the config for .htaccess usage
 RUN echo '<Directory /var/www/html/>' >> /etc/apache2/apache2.conf && \
     echo '    AllowOverride All' >> /etc/apache2/apache2.conf && \
     echo '    Require all granted' >> /etc/apache2/apache2.conf && \
     echo '</Directory>' >> /etc/apache2/apache2.conf
 
-# Production configurations: Suppress deprecated warnings and notices globally for PHP 8.2
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
     && echo "error_reporting = E_ALL & ~E_DEPRECATED & ~E_NOTICE" >> /usr/local/etc/php/conf.d/docker-errors.ini \
     && echo "display_errors = Off" >> /usr/local/etc/php/conf.d/docker-errors.ini
@@ -58,11 +57,11 @@ COPY . .
 # ==========================================
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# FIXED: Back up repository's frontend assets, run Composer, and merge them back together
+# FIXED: Safely isolates your repository assets, runs composer, then combines them flawlessly via rsync
 RUN mv /var/www/html/vendor /var/www/html/vendor_static || true && \
     composer install --no-dev --optimize-autoloader --no-interaction && \
     mkdir -p /var/www/html/vendor && \
-    cp -r /var/www/html/vendor_static/. /var/www/html/vendor/ 2>/dev/null || true && \
+    if [ -d "/var/www/html/vendor_static" ]; then rsync -av /var/www/html/vendor_static/ /var/www/html/vendor/; fi && \
     rm -rf /var/www/html/vendor_static
 
 # ==========================================
