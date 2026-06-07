@@ -16,7 +16,6 @@ docker-compose.yaml
 
 # Composer package directories
 # (Letting Docker download fresh dependencies ensures compatibility)
-vendor/
 
 # CodeIgniter 4 framework cache, logs, and sessions
 writable/cache/*
