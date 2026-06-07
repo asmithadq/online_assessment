@@ -57,12 +57,17 @@ COPY . .
 # 5. Composer Package Installations
 # ==========================================
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# FIXED: Back up repository's frontend assets, run Composer, and merge them back together
+RUN mv /var/www/html/vendor /var/www/html/vendor_static || true && \
+    composer install --no-dev --optimize-autoloader --no-interaction && \
+    mkdir -p /var/www/html/vendor && \
+    cp -r /var/www/html/vendor_static/. /var/www/html/vendor/ 2>/dev/null || true && \
+    rm -rf /var/www/html/vendor_static
 
 # ==========================================
 # 6. Access Controls and Security Execution
 # ==========================================
-# FIXED: Explicitly pre-create the upload mount points before running chown/chmod
 RUN mkdir -p /var/www/html/uploads /var/www/html/downloads \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
