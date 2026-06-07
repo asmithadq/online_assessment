@@ -50,7 +50,7 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
 # 4. Source Application Code Delivery
 # ==========================================
 # Replicate the exact subfolder environment your framework expects
-WORKDIR /var/www/html/online-assessment
+WORKDIR /var/www/html
 
 # Copy all repository source directories directly inside the nested layout
 COPY . .
