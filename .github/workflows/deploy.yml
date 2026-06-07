@@ -2,7 +2,8 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ "main" ] # Triggers whenever you push changes to your main branch
+    branches: [ "main" ] 
+  workflow_dispatch: # Enables the manual browser UI button
 
 jobs:
   build-and-push:
