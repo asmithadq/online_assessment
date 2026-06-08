@@ -85,3 +85,4 @@ RUN mkdir -p /var/www/html/uploads /var/www/html/downloads \
 EXPOSE 80
 
 CMD ["apache2-foreground"]
+# end of the fiie
