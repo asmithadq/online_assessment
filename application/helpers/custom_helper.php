@@ -498,7 +498,7 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
     preg_match('/bitrate: (\d+) kb\/s/', implode("\n", $bitrateOutput), $matches);
     $originalBitrate = isset($matches[1]) ? (int)$matches[1] : 0;
 
-    if ($originalBitrate > 0) {
+    //if ($originalBitrate > 0) {
         // Calculate the target bitrate (50% of the original)
         $targetBitrate = $originalFileSize * 0.75; //$originalBitrate / 2;
 
@@ -564,9 +564,9 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
             // Delete the original uploaded file
             unlink($input_file);  
         } 
-    } else {
+    /*} else {
         $output = "Could not determine the original bitrate.";
-    }
+    }*/
 
     //echo "<br> Output ".$output;exit;
     return $output;
