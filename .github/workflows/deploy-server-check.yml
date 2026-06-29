@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Server  connectivity and access check
 
 on:
   push:
