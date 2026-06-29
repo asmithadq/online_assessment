@@ -80,6 +80,6 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           debug: true
           script: |
-            cd /opt/online-assessment
+            cd /opt/arima/data/stacks/online-assessment
             docker compose pull
             docker compose up -d
