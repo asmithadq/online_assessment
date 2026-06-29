@@ -82,6 +82,10 @@ RUN mkdir -p /var/www/html/uploads /var/www/html/downloads \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
+RUN mkdir -p /var/log/temp/mpdf \
+    && chown -R www-data:www-data /var/log/temp/mpdf \
+    && chmod -R 775 /var/log/temp/mpdf    
+
 EXPOSE 80
 
 CMD ["apache2-foreground"]
