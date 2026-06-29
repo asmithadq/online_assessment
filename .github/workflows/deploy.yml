@@ -28,6 +28,23 @@ jobs:
             asmithadq/online-assessment:v1
             asmithadq/online-assessment:latest
       
+      - name: Verify secrets
+        run: |
+          echo "Host length: ${#HOST}"
+          echo "Port: $PORT"
+          echo "User: $USER"
+        env:
+          HOST: ${{ secrets.SERVER_HOST }}
+          PORT: ${{ secrets.SERVER_PORT }}
+          USER: ${{ secrets.SERVER_USER }}
+
+      - name: Network diagnostics
+        run: |
+          echo "Host: ${{ secrets.SERVER_HOST }}"
+          nslookup ${{ secrets.SERVER_HOST }} || true
+          ping -c 3 ${{ secrets.SERVER_HOST }} || true
+          nc -vz ${{ secrets.SERVER_HOST }} ${{ secrets.SERVER_PORT }} || true    
+      
       - name: Test SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
