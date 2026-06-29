@@ -34,6 +34,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           port: ${{ secrets.SERVER_PORT }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          debug: true
           script: |
             cd /opt/online-assessment
             docker compose pull
