@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libbz2-dev \
     libcurl4-openssl-dev \
     libffi-dev \
+    ffmpeg \
     zip \
     unzip \
     git \
