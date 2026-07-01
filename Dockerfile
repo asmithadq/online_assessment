@@ -53,11 +53,14 @@ RUN echo '<Directory /var/www/html/>' >> /etc/apache2/apache2.conf && \
 
 # Production configurations & PHP Ini Flag Modifiers
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
-    && echo "error_reporting = E_ALL & ~E_DEPRECATED & ~E_NOTICE" >> /usr/local/etc/php/conf.d/docker-errors.ini \
+    && echo "error_reporting = E_ALL & ~E_DEPRECATED & ~E_NOTICE" > /usr/local/etc/php/conf.d/docker-errors.ini \
     && echo "display_errors = Off" >> /usr/local/etc/php/conf.d/docker-errors.ini \
-    # FIXED: Explicitly enables short tags (<? instead of <?php)
-    && echo "short_open_tag = On" >> /usr/local/etc/php/conf.d/docker-shorttags.ini
-
+    && echo "short_open_tag = On" > /usr/local/etc/php/conf.d/docker-shorttags.ini \
+    && echo "upload_max_filesize = 512M" > /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "post_max_size = 1032M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "memory_limit = 1024M" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "max_execution_time = 600" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "max_input_time = 600" >> /usr/local/etc/php/conf.d/uploads.ini
 # ==========================================
 # 4. Source Application Code Delivery
 # ==========================================
