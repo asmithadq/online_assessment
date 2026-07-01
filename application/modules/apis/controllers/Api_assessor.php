@@ -1602,7 +1602,7 @@ class Api_assessor extends MY_Controller
                         $input_file = './uploads/student_assessment_videos/temp/' . $_FILES['video_file']['name'];
                         $video_submitted_dts = date('d-m-Y H:i:s'); 
 
-                        $video = $this->validateAndSaveUploadedVideo('video_file','student_assessment_videos/temp',$student_id . '-' . date('dmYHis') . '-' . $fieldName,5); // max size MB
+                        $video = $this->validateAndSaveUploadedVideo('video_file','student_assessment_videos/temp',$student_id . '-' . date('dmYHis') . '-' . $fieldName,25); // max size MB
 
                         if ($video) {
 
