@@ -82,7 +82,7 @@ RUN if [ -d "/var/www/html/vendor" ]; then mv /var/www/html/vendor /var/www/html
 # ==========================================
 # 6. Access Controls and Security Execution
 # ==========================================
-RUN mkdir -p /var/www/html/uploads /var/www/html/downloads \
+RUN mkdir -p /var/www/html/uploads /var/www/html/downloads /var/www/html/uploads/assessors_checklist_documents/temp \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
