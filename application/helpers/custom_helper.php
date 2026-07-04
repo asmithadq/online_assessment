@@ -481,11 +481,6 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
     $font_file = './system/fonts/texb.ttf'; // Path to the TTF font
     $output = "";
 
-    var_dump($batch_id);
-    var_dump($assessor_code);
-    var_dump($lat);
-    var_dump($long);
-
     //echo "<br> input_file ".$input_file;
     //echo "<br> output_file ".$output_file;
     //exit;
@@ -514,13 +509,18 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
         $line_spacing = 15; // Spacing between lines
         $max_chars_per_line = intval($video_width / $average_char_width);
 
-        $assessor_details = $batch_id." - ".$assessor_code;
-        $latLong = "Lat ".$lat.", Long ".$long;
+        $assessor_details = $batch_id." - ".$assessor_code."\f";
+        $latLong = "Lat ".$lat.", Long ".$long."\f";
         $text = split_text($geoaddress, $max_chars_per_line);  
-        $arr_text = explode("\n", $text); 
-        
-        $assessor_details = ffmpeg_escape($assessor_details);
-        $latLong = ffmpeg_escape($latLong);
+        $arr_text = explode("\n", $text);    
+
+        var_dump($batch_id);
+        var_dump($assessor_code);
+        var_dump($lat);
+        var_dump($long);
+        var_dump($assessor_details);
+        var_dump($latLong);
+        var_dump($text);
 
         $datetime = $video_submitted_dts;  // Define the start time for the timestamp
         list($date, $time) = explode(' ', $datetime);
@@ -530,7 +530,7 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
         list($hours, $minutes, $seconds) = explode(':', $time);
         $startSeconds = ($hours * 3600) + ($minutes * 60) + $seconds;
         
-        $content = $assessor_details."\f".$latLong."\f".$text;
+        $content = $assessor_details.$latLong.$text;
 
         // Calculate number of lines
         $lines = substr_count($content, "\f") + 1;
@@ -553,12 +553,12 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
                 "\"format=yuv444p, " .
                 "drawbox=y=ih-{$box_height}:color=black@0.4:width=iw:height={$box_height}:t=fill, " . // Dynamic Background box
                 "drawtext=fontfile=$font_file:text='$formattedDate %{pts\:gmtime\\:$startSeconds\\:%T}':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$date_height}-th, " . // Date and Time
-                "drawtext=fontfile=$font_file:text=Sai Ram, No 42:fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$assessor_details_text_height}-(th/2), " . // Batch and Assessor details
-                "drawtext=fontfile=$font_file:text=18.23.23.36:fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$latLong_text_height}-(th/2), "; // Latitude and Longitude
+                "drawtext=fontfile=$font_file:text='$assessor_details':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$assessor_details_text_height}-(th/2), " . // Batch and Assessor details
+                "drawtext=fontfile=$font_file:text='$latLong':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$latLong_text_height}-(th/2), "; // Latitude and Longitude
                 // Address
                 if(count($arr_text) > 0) {
                     foreach($arr_text as $textData) {
-                        $cmd .= "drawtext=fontfile=$font_file:text='$textData':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$text_height}-(th/2), ";
+                        $cmd .= "drawtext=fontfile=$font_file:text='$assessor_details':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$text_height}-(th/2), ";
                         $text_height = $text_height-20;
                     }
                 }
@@ -568,7 +568,12 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
         /*$cmd    .= "format=yuv420p\" " .
                     "-c:v libx264 -b:v {$targetBitrate}k -bufsize {$targetBitrate}k -maxrate {$targetBitrate}k -c:a aac -b:a 128k -movflags +faststart $output_file 2>&1"; */   
 
-        echo "<br> cmd ".htmlspecialchars($cmd);//exit;  
+        //echo "<br> cmd ".$cmd;exit;  
+
+        echo "<pre>";
+        echo htmlspecialchars($cmd);
+        echo "</pre>";
+        //exit;
         
         echo "<br> output_file ".$output_file;
         
@@ -588,18 +593,6 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
 
     //echo "<br> Output ".$output;exit;
     return $output;
-}
-
-function ffmpeg_escape($text)
-{
-    $text = str_replace("\\", "\\\\", $text);
-    $text = str_replace(":", "\:", $text);
-    $text = str_replace(",", "\,", $text);
-    $text = str_replace("'", "\\'", $text);
-    $text = str_replace("%", "\%", $text);
-    $text = str_replace("[", "\[", $text);
-    $text = str_replace("]", "\]", $text);
-    return $text;
 }
 
 
