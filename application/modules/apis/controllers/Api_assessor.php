@@ -1946,24 +1946,18 @@ class Api_assessor extends MY_Controller
                             // File paths
                             $temp_path = $_FILES['file']['tmp_name'];
                             $fileName = $batch_id.'-'.seo_friendly_url($this->input->post('document_title')).'-'.date('dmYHis').'.mp4';
-                            $output_file = './uploads/assessors_checklist_documents/'.$fileName;
-                            $input_file = './uploads/student_assessment_videos/temp/' . $_FILES['file']['name']; 
+                            //$output_file = './uploads/assessors_checklist_documents/'.$fileName;
+                            //$input_file = './uploads/student_assessment_videos/temp/' . $_FILES['file']['name']; 
                             $video_submitted_dts = date('d-m-Y H:i:s'); 
-
-                            echo "<br> batch id ".$batch_id;
-                            echo "<pre>";
-                            print_r($_FILES);
-                            echo "</pre>";
-                            //exit;
     
-                            $video = $this->validateAndSaveUploadedVideo('file','student_assessment_videos/temp',$batch_id . '-' . date('dmYHis') . '-document',25);
+                            $video = $this->validateAndSaveUploadedVideo('video_file','student_assessment_videos/temp',$batch_id . '-' . date('dmYHis') . '-document',25);
 
                             if ($video) {
-                                echo "<br> Success ";exit;
+
                                 $input_file = $video['file_path'];
                                 $fileName   = $video['file_name'];
 
-                                $output_file = './uploads/student_assessment_videos/' . $fileName;
+                                $output_file = './uploads/assessors_checklist_documents/' . $fileName;
 
                                 $updData['document_file_uploaded'] = $fileName;
 
@@ -2004,7 +1998,7 @@ class Api_assessor extends MY_Controller
                                 $video_error = ($output == 'Success') ? 0 : 1;
 
                             } else {
-                                echo "<br> Success ";exit;    
+
                                 // Validation failed
                                 $video_error = 2;
 
@@ -3144,7 +3138,6 @@ class Api_assessor extends MY_Controller
             !isset($_FILES[$fileKey]) ||
             $_FILES[$fileKey]['error'] !== UPLOAD_ERR_OK
         ) {
-            
             log_message('error', 'Video upload failed.');
             return false;
         }
@@ -3268,7 +3261,7 @@ class Api_assessor extends MY_Controller
         |--------------------------------------------------------------------------
         */
         $uploadDir = FCPATH . 'uploads/' . $destFolder . '/';
-        
+
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
