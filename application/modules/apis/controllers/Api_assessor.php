@@ -1959,7 +1959,7 @@ class Api_assessor extends MY_Controller
                             $video = $this->validateAndSaveUploadedVideo('file','assessors_checklist_documents/temp',$batch_id . '-' . date('dmYHis') . '-document',25);
 
                             if ($video) {
-
+                                echo "<br> Success ";exit;
                                 $input_file = $video['file_path'];
                                 $fileName   = $video['file_name'];
 
@@ -2004,7 +2004,7 @@ class Api_assessor extends MY_Controller
                                 $video_error = ($output == 'Success') ? 0 : 1;
 
                             } else {
-
+                                echo "<br> Error ";exit;    
                                 // Validation failed
                                 $video_error = 2;
 
@@ -3268,8 +3268,7 @@ class Api_assessor extends MY_Controller
         |--------------------------------------------------------------------------
         */
         $uploadDir = FCPATH . 'uploads/' . $destFolder . '/';
-        echo "<br> uploadDir ".$uploadDir;exit;
-
+        
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
