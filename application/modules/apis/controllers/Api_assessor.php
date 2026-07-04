@@ -1949,6 +1949,12 @@ class Api_assessor extends MY_Controller
                             //$output_file = './uploads/assessors_checklist_documents/'.$fileName;
                             $input_file = './uploads/assessors_checklist_documents/temp/' . $_FILES['file']['name']; 
                             $video_submitted_dts = date('d-m-Y H:i:s'); 
+
+							echo "<br> batch id ".$batch_id;
+                            echo "<pre>";
+                            print_r($_FILES);
+                            echo "</pre>";
+                            exit;
     
                             $video = $this->validateAndSaveUploadedVideo('video_file','student_assessment_videos/temp',$batch_id . '-' . date('dmYHis') . '-document',25);
 
