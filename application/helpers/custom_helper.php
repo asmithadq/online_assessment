@@ -553,12 +553,12 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
                 "\"format=yuv444p, " .
                 "drawbox=y=ih-{$box_height}:color=black@0.4:width=iw:height={$box_height}:t=fill, " . // Dynamic Background box
                 "drawtext=fontfile=$font_file:text='$formattedDate %{pts\:gmtime\\:$startSeconds\\:%T}':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$date_height}-th, " . // Date and Time
-                "drawtext=fontfile=$font_file:text='$assessor_details':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$assessor_details_text_height}-(th/2), " . // Batch and Assessor details
-                "drawtext=fontfile=$font_file:text='$latLong':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$latLong_text_height}-(th/2), "; // Latitude and Longitude
+                "drawtext=fontfile=$font_file:text='$formattedDate':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$assessor_details_text_height}-(th/2), " . // Batch and Assessor details
+                "drawtext=fontfile=$font_file:text='$formattedDate':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$latLong_text_height}-(th/2), "; // Latitude and Longitude
                 // Address
                 if(count($arr_text) > 0) {
                     foreach($arr_text as $textData) {
-                        $cmd .= "drawtext=fontfile=$font_file:text='$assessor_details':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$text_height}-(th/2), ";
+                        $cmd .= "drawtext=fontfile=$font_file:text='$textData':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$text_height}-(th/2), ";
                         $text_height = $text_height-20;
                     }
                 }
