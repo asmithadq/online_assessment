@@ -532,35 +532,35 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
         $latLong_text_height = $assessor_details_text_height-25;
         $text_height = $latLong_text_height-12; 
 
-        echo "<br> content ".$content;
+        /*echo "<br> content ".$content;
         echo "<br> lines ".$lines;
         echo "<br> box_height ".$box_height;    
         echo "<br> date_height ".$date_height;
         echo "<br> assessor_details_text_height ".$assessor_details_text_height;    
         echo "<br> latLong_text_height ".$latLong_text_height;
-        echo "<br> text_height ".$text_height;
+        echo "<br> text_height ".$text_height;*/
         
         // FFmpeg command
         $cmd = "ffmpeg -i $input_file -vf " .
                 "\"format=yuv444p, " .
                 "drawbox=y=ih-{$box_height}:color=black@0.4:width=iw:height={$box_height}:t=fill, " . // Dynamic Background box
                 "drawtext=fontfile=$font_file:text='$formattedDate %{pts\:gmtime\\:$startSeconds\\:%T}':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$date_height}-th, " . // Date and Time
-                "drawtext=fontfile=$font_file:text='$assessor_details':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$assessor_details_text_height}-(th/2), " . // Batch and Assessor details
-                "drawtext=fontfile=$font_file:text='$latLong':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$latLong_text_height}-(th/2), "; // Latitude and Longitude
+                "drawtext=fontfile=$font_file:text='$assessor_details':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$assessor_details_text_height}-(th/2), "; // Batch and Assessor details
+                //"drawtext=fontfile=$font_file:text='$latLong':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$latLong_text_height}-(th/2), "; // Latitude and Longitude
                 // Address
-                if(count($arr_text) > 0) {
+                /*if(count($arr_text) > 0) {
                     foreach($arr_text as $textData) {
                         $cmd .= "drawtext=fontfile=$font_file:text='$textData':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$text_height}-(th/2), ";
                         $text_height = $text_height-20;
                     }
-                }
+                }*/
         $cmd .= "format=yuv420p\" " .
                 "-c:v libx264 -crf 23 -c:a copy -movflags +faststart $output_file 2>&1";
 
         /*$cmd    .= "format=yuv420p\" " .
                     "-c:v libx264 -b:v {$targetBitrate}k -bufsize {$targetBitrate}k -maxrate {$targetBitrate}k -c:a aac -b:a 128k -movflags +faststart $output_file 2>&1"; */   
 
-        echo "<br> cmd ".$cmd;exit;     
+        //echo "<br> cmd ".$cmd;exit;     
         
         exec($cmd, $output, $return_var);
 
