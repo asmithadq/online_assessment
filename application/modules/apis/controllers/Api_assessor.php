@@ -1952,14 +1952,32 @@ class Api_assessor extends MY_Controller
     
                             $video = $this->validateAndSaveUploadedVideo('video_file','student_assessment_videos/temp',$batch_id . '-' . date('dmYHis') . '-document',25);
 
-                            if ($video) {
+                            echo "<pre>";
+                            print_r($video);
+                            echo "</pre>";
 
+                            if ($video) {
                                 $input_file = $video['file_path'];
                                 $fileName   = $video['file_name'];
 
                                 $output_file = './uploads/assessors_checklist_documents/' . $fileName;
 
                                 $updData['document_file_uploaded'] = $fileName;
+
+                                $arroutput = array(
+                                    $input_file,
+                                    $output_file,
+                                    $batch_id,
+                                    $assessor_code,
+                                    $this->input->post('lat', true),
+                                    $this->input->post('long', true),
+                                    $this->input->post('geo_address', true),
+                                    $video_submitted_dts
+                                );
+
+                                echo "<pre>";
+                                print_r($arroutput);
+                                echo "</pre>";
 
                                 /*
                                 |--------------------------------------------------------------------------
@@ -1993,12 +2011,16 @@ class Api_assessor extends MY_Controller
                                     'created_dts'  => date('Y-m-d H:i:s')
                                 ];
 
+                                echo "<pre>";
+                                print_r($arrInsertCron);
+                                echo "</pre>";
+
                                 $this->db->insert('tbl_cron_video_watermarking',$arrInsertCron);
 
                                 $video_error = ($output == 'Success') ? 0 : 1;
 
                             } else {
-
+                                echo "<br> else 2 ";    
                                 // Validation failed
                                 $video_error = 2;
 
@@ -2009,9 +2031,12 @@ class Api_assessor extends MY_Controller
                             }
                         }
                         else {
+                            echo "<br> else 3 ";  
                             $video_error = 3;
                         }
                     }
+
+                    echo "<br> video error ".$video_error;
                     
                     if($old_file != "" && $updData['document_file_uploaded'] != "") {
                         $file = $this->config->item('assessors_checklist_documents_path').$old_file;
