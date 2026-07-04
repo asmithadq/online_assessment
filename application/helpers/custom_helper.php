@@ -514,14 +514,6 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
         $text = split_text($geoaddress, $max_chars_per_line);  
         $arr_text = explode("\n", $text);    
 
-        var_dump($batch_id);
-        var_dump($assessor_code);
-        var_dump($lat);
-        var_dump($long);
-        var_dump($assessor_details);
-        var_dump($latLong);
-        var_dump($text);
-
         $datetime = $video_submitted_dts;  // Define the start time for the timestamp
         list($date, $time) = explode(' ', $datetime);
         $formattedDate = date('M d, Y',strtotime($datetime));
@@ -534,11 +526,16 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
 
         // Calculate number of lines
         $lines = substr_count($content, "\f") + 1;
-        $box_height = ($lines * $average_char_height) + (($lines - 1) * $line_spacing) + 80; // 40 is padding
-        $date_height = $box_height-28;
-        $assessor_details_text_height = $date_height-20;
-        $latLong_text_height = $assessor_details_text_height-20;
-        $text_height = $latLong_text_height-12; 
+
+        $box_height = ($lines * $average_char_height) + (($lines - 1) * $line_spacing) + 80;
+
+        // Space between every line
+        $line_gap = 24;
+
+        $date_height = $box_height - 28;
+        $assessor_details_text_height = $date_height - $line_gap;
+        $latLong_text_height = $assessor_details_text_height - $line_gap;
+        $text_height = $latLong_text_height - $line_gap;
 
         /*echo "<br> content ".$content;
         echo "<br> lines ".$lines;
@@ -557,9 +554,9 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
                 "drawtext=fontfile=$font_file:text='$latLong':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$latLong_text_height}-(th/2), "; // Latitude and Longitude
                 // Address
                 if(count($arr_text) > 0) {
-                    foreach($arr_text as $textData) {
+                    foreach ($arr_text as $textData) {
                         $cmd .= "drawtext=fontfile=$font_file:text='$textData':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$text_height}-(th/2), ";
-                        $text_height = $text_height-20;
+                        $text_height -= $line_gap;
                     }
                 }
         $cmd .= "format=yuv420p\" " .
@@ -570,9 +567,9 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
 
         //echo "<br> cmd ".$cmd;exit;  
 
-        echo "<pre>";
+        /*echo "<pre>";
         echo htmlspecialchars($cmd);
-        echo "</pre>";
+        echo "</pre>";*/
         //exit;
         
         echo "<br> output_file ".$output_file;
