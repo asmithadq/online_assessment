@@ -509,8 +509,8 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
         $line_spacing = 15; // Spacing between lines
         $max_chars_per_line = intval($video_width / $average_char_width);
 
-        $assessor_details = $batch_id." - ".$assessor_code."\f";
-        $latLong = "Lat ".$lat.", Long ".$long."\f";
+        $assessor_details = $batch_id." - ".$assessor_code;
+        $latLong = "Lat ".$lat.", Long ".$long;
         $text = split_text($geoaddress, $max_chars_per_line);  
         $arr_text = explode("\n", $text);    
 
@@ -530,7 +530,7 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
         list($hours, $minutes, $seconds) = explode(':', $time);
         $startSeconds = ($hours * 3600) + ($minutes * 60) + $seconds;
         
-        $content = $assessor_details.$latLong.$text;
+        $content = $assessor_details."\f".$latLong."\f".$text;
 
         // Calculate number of lines
         $lines = substr_count($content, "\f") + 1;
@@ -554,7 +554,7 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
                 "drawbox=y=ih-{$box_height}:color=black@0.4:width=iw:height={$box_height}:t=fill, " . // Dynamic Background box
                 "drawtext=fontfile=$font_file:text='$formattedDate %{pts\:gmtime\\:$startSeconds\\:%T}':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$date_height}-th, " . // Date and Time
                 "drawtext=fontfile=$font_file:text='$formattedDate':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$assessor_details_text_height}-(th/2), " . // Batch and Assessor details
-                "drawtext=fontfile=$font_file:text='$formattedDate':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$latLong_text_height}-(th/2), "; // Latitude and Longitude
+                "drawtext=fontfile=$font_file:text='$latLong':fontcolor=white:fontsize=18:x=w-tw-5:y=h-{$latLong_text_height}-(th/2), "; // Latitude and Longitude
                 // Address
                 if(count($arr_text) > 0) {
                     foreach($arr_text as $textData) {
