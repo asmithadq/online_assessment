@@ -528,7 +528,7 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
         $lines = substr_count($content, "\f") + 1;
         $box_height = ($lines * $average_char_height) + (($lines - 1) * $line_spacing) + 80; // 40 is padding
         $date_height = $box_height-28;
-        $assessor_details_text_height = $date_height-20;
+        $assessor_details_text_height = 103; //$date_height-20;
         $latLong_text_height = $assessor_details_text_height-25;
         $text_height = $latLong_text_height-12; 
 
