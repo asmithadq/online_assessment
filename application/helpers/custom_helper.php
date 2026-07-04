@@ -532,6 +532,15 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
         $latLong_text_height = $assessor_details_text_height-25;
         $text_height = $latLong_text_height-12; 
 
+        echo "<br> content ".$content;
+        echo "<br> lines ".$lines;
+        echo "<br> box_height ".$box_height;    
+        echo "<br> date_height ".$date_height;
+        echo "<br> assessor_details_text_height ".$assessor_details_text_height;    
+        echo "<br> latLong_text_height ".$latLong_text_height;
+        echo "<br> text_height ".$text_height;
+        exit;
+        
         // FFmpeg command
         $cmd = "ffmpeg -i $input_file -vf " .
                 "\"format=yuv444p, " .
