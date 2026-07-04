@@ -539,7 +539,6 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
         echo "<br> assessor_details_text_height ".$assessor_details_text_height;    
         echo "<br> latLong_text_height ".$latLong_text_height;
         echo "<br> text_height ".$text_height;
-        exit;
         
         // FFmpeg command
         $cmd = "ffmpeg -i $input_file -vf " .
@@ -561,7 +560,7 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
         /*$cmd    .= "format=yuv420p\" " .
                     "-c:v libx264 -b:v {$targetBitrate}k -bufsize {$targetBitrate}k -maxrate {$targetBitrate}k -c:a aac -b:a 128k -movflags +faststart $output_file 2>&1"; */   
 
-        //echo $cmd;exit;         
+        echo "<br> cmd ".$cmd;exit;     
         
         exec($cmd, $output, $return_var);
 
