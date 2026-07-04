@@ -1946,17 +1946,17 @@ class Api_assessor extends MY_Controller
                             // File paths
                             $temp_path = $_FILES['file']['tmp_name'];
                             $fileName = $batch_id.'-'.seo_friendly_url($this->input->post('document_title')).'-'.date('dmYHis').'.mp4';
-                            //$output_file = './uploads/assessors_checklist_documents/'.$fileName;
+                            $output_file = './uploads/assessors_checklist_documents/'.$fileName;
                             $input_file = './uploads/assessors_checklist_documents/temp/' . $_FILES['file']['name']; 
                             $video_submitted_dts = date('d-m-Y H:i:s'); 
 
-							echo "<br> batch id ".$batch_id;
+                            echo "<br> batch id ".$batch_id;
                             echo "<pre>";
                             print_r($_FILES);
                             echo "</pre>";
-                            exit;
+                            //exit;
     
-                            $video = $this->validateAndSaveUploadedVideo('video_file','student_assessment_videos/temp',$batch_id . '-' . date('dmYHis') . '-document',25);
+                            $video = $this->validateAndSaveUploadedVideo('file','assessors_checklist_documents/temp',$batch_id . '-' . date('dmYHis') . '-document',25);
 
                             if ($video) {
 
@@ -3144,6 +3144,7 @@ class Api_assessor extends MY_Controller
             !isset($_FILES[$fileKey]) ||
             $_FILES[$fileKey]['error'] !== UPLOAD_ERR_OK
         ) {
+            
             log_message('error', 'Video upload failed.');
             return false;
         }
@@ -3267,6 +3268,7 @@ class Api_assessor extends MY_Controller
         |--------------------------------------------------------------------------
         */
         $uploadDir = FCPATH . 'uploads/' . $destFolder . '/';
+        echo "<br> uploadDir ".$uploadDir;exit;
 
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
