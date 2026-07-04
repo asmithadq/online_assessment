@@ -1947,37 +1947,30 @@ class Api_assessor extends MY_Controller
                             $temp_path = $_FILES['file']['tmp_name'];
                             $fileName = $batch_id.'-'.seo_friendly_url($this->input->post('document_title')).'-'.date('dmYHis').'.mp4';
                             //$output_file = './uploads/assessors_checklist_documents/'.$fileName;
-                            //$input_file = './uploads/student_assessment_videos/temp/' . $_FILES['file']['name']; 
+                            $input_file = './uploads/assessors_checklist_documents/temp/' . $_FILES['file']['name']; 
                             $video_submitted_dts = date('d-m-Y H:i:s'); 
-    
-                            $video = $this->validateAndSaveUploadedVideo('video_file','student_assessment_videos/temp',$batch_id . '-' . date('dmYHis') . '-document',25);
 
+                            echo "<br> batch id ".$batch_id;
                             echo "<pre>";
-                            print_r($video);
+                            print_r($_FILES);
                             echo "</pre>";
+                            //exit;
+    
+                            $video = $this->validateAndSaveUploadedVideo('file','assessors_checklist_documents/temp',$batch_id . '-' . date('dmYHis') . '-document',25);
 
                             if ($video) {
+                                echo "<br> Success ";
+                                echo "<pre>";
+                                print_r($video);
+                                echo "</pre>";
+                                
+                                exit;
                                 $input_file = $video['file_path'];
                                 $fileName   = $video['file_name'];
 
-                                $output_file = './uploads/assessors_checklist_documents/' . $fileName;
+                                $output_file = './uploads/student_assessment_videos/' . $fileName;
 
                                 $updData['document_file_uploaded'] = $fileName;
-
-                                $arroutput = array(
-                                    $input_file,
-                                    $output_file,
-                                    $batch_id,
-                                    $assessor_code,
-                                    $this->input->post('lat', true),
-                                    $this->input->post('long', true),
-                                    $this->input->post('geo_address', true),
-                                    $video_submitted_dts
-                                );
-
-                                echo "<pre>";
-                                print_r($arroutput);
-                                echo "</pre>";
 
                                 /*
                                 |--------------------------------------------------------------------------
@@ -2011,16 +2004,12 @@ class Api_assessor extends MY_Controller
                                     'created_dts'  => date('Y-m-d H:i:s')
                                 ];
 
-                                echo "<pre>";
-                                print_r($arrInsertCron);
-                                echo "</pre>";
-
                                 $this->db->insert('tbl_cron_video_watermarking',$arrInsertCron);
 
                                 $video_error = ($output == 'Success') ? 0 : 1;
 
                             } else {
-                                echo "<br> else 2 ";    
+                                echo "<br> Error ";exit;    
                                 // Validation failed
                                 $video_error = 2;
 
@@ -2031,12 +2020,9 @@ class Api_assessor extends MY_Controller
                             }
                         }
                         else {
-                            echo "<br> else 3 ";  
                             $video_error = 3;
                         }
                     }
-
-                    echo "<br> video error ".$video_error;
                     
                     if($old_file != "" && $updData['document_file_uploaded'] != "") {
                         $file = $this->config->item('assessors_checklist_documents_path').$old_file;
