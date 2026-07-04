@@ -572,7 +572,7 @@ function watermarkVideo($input_file,$output_file,$batch_id,$assessor_code,$lat,$
         echo "</pre>";*/
         //exit;
         
-        echo "<br> output_file ".$output_file;
+        //echo "<br> output_file ".$output_file;
         
         exec($cmd, $output, $return_var);
 
