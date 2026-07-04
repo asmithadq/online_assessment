@@ -2013,7 +2013,7 @@ class Api_assessor extends MY_Controller
                             }
                         }
                         else {
-                            $video_error = 3;
+                            $video_error = 3; 
                         }
                     }
                     
