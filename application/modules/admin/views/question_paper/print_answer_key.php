@@ -24,7 +24,7 @@ if($arr_batch_students != false) {
             					</b>
             					<br />
             		</td>
-            		<td width="160" align="center" style="font-size:14px; font-family:arial; "> <img src="<?php echo base_url(); ?>assets/admin/images/logo/hemsenlogo.png" alt="logo" width="120" /> </td>
+            		<td width="160" align="center" style="font-size:14px; font-family:arial; "> <img src="<?php echo base_url(); ?>assets/admin/images/logo/logo.png" alt="logo" width="120" /> </td>
             	</tr>
             </table>
             <?php
