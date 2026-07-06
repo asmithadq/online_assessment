@@ -85,7 +85,7 @@
             <div class="bold-text small-text"><p style="font-size: 12px;">Batch ID: <?php echo $arr_batch_details['batch_id'] ?></p></div>
             <?php 
             $student_count = 0;
-            foreach ($arr_batch_student_details as $key => $student_details) { ?>
+            foreach ($arr_batch_student_details as $key => $student_details) { ?> 
 			<div class="column" style="width: 100%">
                     <div class="candidate-card">
                         <div class="candidate-info">
