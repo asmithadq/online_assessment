@@ -20,7 +20,7 @@ body{ margin-top:10px;
 		   -
 		<?php echo $arr_batch_details[0]['trade_code']; ?></b><br /></td>
 		<td width="160" align="center" style="font-size:14px; font-family:arial; ">   
-			<img src="<?php echo base_url(); ?>assets/admin/images/logo/hemsenlogo.png" alt="logo" width="120" />
+			<img src="<?php echo base_url(); ?>assets/admin/images/logo/logo.png" alt="logo" width="120" />
 		</td>
 	  </tr>
 	</table></td>
