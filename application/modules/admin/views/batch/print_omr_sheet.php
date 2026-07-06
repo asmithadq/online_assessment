@@ -8,7 +8,7 @@ foreach($arr_batch_student_details as $student_details) {
 			<h3 align="center" style="margin:1px;"><u><?php echo $arr_batch_details['ag_name']; ?></u></h3>
 			<img src="<?php echo base_url(); ?>assets/admin/images/OMR_head.jpg" alt="Head" width="125" height="30" /> 
     	</div>
-    		<div style="width: 33.33%;float: right; text-align: right;"> <img src="<?php echo base_url(); ?>assets/admin/images/logo/hemsenlogo.png" alt="Hemsen Logo" width="125" /> 
+    		<div style="width: 33.33%;float: right; text-align: right;"> <img src="<?php echo base_url(); ?>assets/admin/images/logo/logo.png" alt="Logo" width="125" /> 
     	</div>
     </div>
     		
