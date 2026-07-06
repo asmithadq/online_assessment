@@ -78,7 +78,7 @@
                 <p class="bold-text small-text" style="font-size: 12px;"><u>Candidate Photos with Aadhar</u></p>
             </div>
             <div class="column column-right">
-                <img src="<?php echo base_url(); ?>assets/admin/images/logo/hemsenlogo.png" alt="Hemsen Logo" width="120" />
+                <img src="<?php echo base_url(); ?>assets/admin/images/logo/logo.png" alt="Logo" width="120" />
             </div>
         </div>
         <hr>
