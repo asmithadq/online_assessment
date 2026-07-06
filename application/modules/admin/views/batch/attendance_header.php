@@ -22,7 +22,7 @@ body{ margin-top:10px;
                        </td>
                     
                     <td width="160" align="center" style="font-size:14px; font-family:arial; ">   
-                        <img src="<?php echo base_url(); ?>assets/admin/images/logo/hemsenlogo.png" alt="logo" width="100" />
+                        <img src="<?php echo base_url(); ?>assets/admin/images/logo/logo.png" alt="logo" width="100" />
                       
                         
                     </td>
