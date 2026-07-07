@@ -1,6 +1,6 @@
 <?php
 $arr_scc_details = get_ssc_details($arr_student_details['ssc_id']);
-$ssc_logo = $arr_scc_details[0]['ssc_logo'];
+$ssc_logo = $arr_scc_details[0]['ssc_logo']; 
 
 
 ?>
