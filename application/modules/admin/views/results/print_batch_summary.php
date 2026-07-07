@@ -59,7 +59,7 @@ th {
         <div class="container-fluid">
 			<div class="row" style="display: flex; justify-content: space-between;">
 				<div style="width: 50%; float: left; text-align: left;"> <img src="<?php echo base_url().$this->config->item('ssc_logo_path').$ssc_logo; ?>" alt="SSC Logo" width="150" /> </div>
-				<div style="width: 50%; float: right; text-align: right;"> <img src="<?php echo base_url(); ?>assets/admin/images/logo/hemsenlogo.png" alt="Hemsen Logo" width="150" /> </div>
+				<div style="width: 50%; float: right; text-align: right;"> <img src="<?php echo base_url(); ?>assets/admin/images/logo/logo.png" alt="Logo" width="150" /> </div>
 			</div>
             <div class="row">
                 <div class="col-xl-12 col-lg-12">
